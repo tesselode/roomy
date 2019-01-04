@@ -1,5 +1,43 @@
 local roomy = {}
 
+local loveCallbacks = {
+	'directorydropped',
+	'draw',
+	'filedropped',
+	'focus',
+	'keypressed',
+	'keyreleased',
+	'load',
+	'lowmemory',
+	'mousefocus',
+	'mousemoved',
+	'mousepressed',
+	'mousereleased',
+	'quit',
+	'resize',
+	'run',
+	'textedited',
+	'textinput',
+	'threaderror',
+	'touchmoved',
+	'touchpressed',
+	'touchreleased',
+	'update',
+	'visible',
+	'wheelmoved',
+}
+
+local function exclude(t1, t2)
+	local set = {}
+	for _, item in ipairs(t1) do set[item] = true end
+	for _, item in ipairs(t2) do set[item] = nil end
+	local t = {}
+	for item, _ in pairs(set) do
+		table.insert(t, item)
+	end
+	return t
+end
+
 local Manager = {}
 Manager.__index = Manager
 
@@ -59,43 +97,27 @@ function Manager:emit(event, ...)
 	if state[event] then state[event](state, ...) end
 end
 
-local defaultHookOptions = {
-	callbacks = {
-		'directorydropped',
-		'draw',
-		'filedropped',
-		'focus',
-		'keypressed',
-		'keyreleased',
-		'load',
-		'lowmemory',
-		'mousefocus',
-		'mousemoved',
-		'mousepressed',
-		'mousereleased',
-		'quit',
-		'resize',
-		'run',
-		'textedited',
-		'textinput',
-		'threaderror',
-		'touchmoved',
-		'touchpressed',
-		'touchreleased',
-		'update',
-		'visible',
-		'wheelmoved',
-	},
-	applyBefore = 'update',
-}
-
 function Manager:hook(options)
-	options = options or defaultHookOptions
-	for _, callbackName in ipairs(options.callbacks) do
+	if options and options.callbacks and options.skip then
+		error('Cannot define both callbacks and skip lists', 2)
+	end
+	local applyBefore = 'update'
+	if options and options.applyBefore ~= nil then
+		applyBefore = options.applyBefore
+	end
+	local callbacks = loveCallbacks
+	if options then
+		if options.callbacks then
+			callbacks = options.callbacks
+		elseif options.skip then
+			callbacks = exclude(loveCallbacks, options.skip)
+		end
+	end
+	for _, callbackName in ipairs(callbacks) do
 		local oldCallback = love[callbackName]
 		love[callbackName] = function(...)
 			if oldCallback then oldCallback(...) end
-			if callbackName == options.applyBefore then
+			if callbackName == applyBefore then
 				self:apply()
 			end
 			self:emit(callbackName, ...)

@@ -36,6 +36,9 @@ function pause:draw()
 end
 
 function love.load()
-	manager:hook()
+	manager:hook {
+		callbacks = {'update', 'draw'},
+		applyBefore = false,
+	}
 	manager:switch(game)
 end
