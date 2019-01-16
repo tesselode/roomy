@@ -29,6 +29,7 @@ local loveCallbacks = {
 	'wheelmoved',
 }
 
+-- returns a list of all the items in t1 that aren't in t2
 local function exclude(t1, t2)
 	local set = {}
 	for _, item in ipairs(t1) do set[item] = true end
@@ -48,7 +49,9 @@ function Manager:switch(state, ...)
 	table.insert(self.queue, function()
 		local previous = self.stack[#self.stack]
 		if previous then self:emit('leave', state, unpack(args)) end
-		self.stack[math.max(#self.stack, 1)] = state
+		-- if there is no state on the stack yet, make sure the index is still 1
+		local currentStackPosition = math.max(#self.stack, 1)
+		self.stack[currentStackPosition] = state
 		self:emit('enter', previous or false, unpack(args))
 	end)
 end
