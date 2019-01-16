@@ -6,9 +6,6 @@ function game:keypressed(key)
 	if key == 'escape' then
 		manager:push(pause, 'hiya!')
 	end
-	if key == 'space' then
-		manager:switch(pause, 'switching')
-	end
 end
 
 function game:pause()
@@ -36,9 +33,10 @@ function pause:draw()
 end
 
 function love.load()
-	manager:hook {
-		callbacks = {'update', 'draw'},
-		applyBefore = false,
-	}
+	manager:hook()
 	manager:switch(game)
+end
+
+function love.draw()
+	love.graphics.print(math.floor(collectgarbage 'count') .. 'kb', 0, 32)
 end

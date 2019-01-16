@@ -1,5 +1,7 @@
 local roomy = {}
 
+local unpack = unpack or table.unpack -- luacheck: ignore
+
 local loveCallbacks = {
 	'directorydropped',
 	'draw',
@@ -41,54 +43,46 @@ end
 local Manager = {}
 Manager.__index = Manager
 
-function Manager:_switch(state, ...)
-	local previous = self.stack[#self.stack]
-	if previous then self:emit('leave', state, ...) end
-	self.stack[math.max(#self.stack, 1)] = state
-	self:emit('enter', previous or false, ...)
-end
-
-function Manager:_push(state, ...)
-	local previous = self.stack[#self.stack]
-	if previous then self:emit('pause', state, ...) end
-	self.stack[#self.stack + 1] = state
-	self:emit('enter', previous or false, ...)
-end
-
-function Manager:_pop(...)
-	if #self.stack == 0 then
-		error('No state to pop', 3)
-	end
-	if #self.stack == 1 then
-		error('Cannot pop a state when there is no state below it on the stack', 3)
-	end
-	local previous = self.stack[#self.stack]
-	self.stack[#self.stack] = nil
-	self:emit('resume', previous, ...)
-end
-
-function Manager:apply()
-	if not self.action then return end
-	if self.action.type == 'switch' then
-		self:_switch(self.action.state, unpack(self.action.args))
-	elseif self.action.type == 'push' then
-		self:_push(self.action.state, unpack(self.action.args))
-	elseif self.action.type == 'pop' then
-		self:_pop(unpack(self.action.args))
-	end
-	self.action = nil
-end
-
 function Manager:switch(state, ...)
-	self.action = {type = 'switch', state = state, args = {...}}
+	local args = {...}
+	table.insert(self.queue, function()
+		local previous = self.stack[#self.stack]
+		if previous then self:emit('leave', state, unpack(args)) end
+		self.stack[math.max(#self.stack, 1)] = state
+		self:emit('enter', previous or false, unpack(args))
+	end)
 end
 
 function Manager:push(state, ...)
-	self.action = {type = 'push', state = state, args = {...}}
+	local args = {...}
+	table.insert(self.queue, function()
+		local previous = self.stack[#self.stack]
+		if previous then self:emit('pause', state, unpack(args)) end
+		self.stack[#self.stack + 1] = state
+		self:emit('enter', previous or false, unpack(args))
+	end)
 end
 
 function Manager:pop(...)
-	self.action = {type = 'pop', args = {...}}
+	local args = {...}
+	table.insert(self.queue, function()
+		if #self.stack == 0 then
+			error('No state to pop', 3)
+		end
+		if #self.stack == 1 then
+			error('Cannot pop a state when there is no state below it on the stack', 3)
+		end
+		local previous = self.stack[#self.stack]
+		self.stack[#self.stack] = nil
+		self:emit('resume', previous, unpack(args))
+	end)
+end
+
+function Manager:apply()
+	while #self.queue > 0 do
+		self.queue[1]()
+		table.remove(self.queue, 1)
+	end
 end
 
 function Manager:emit(event, ...)
@@ -128,7 +122,7 @@ end
 function roomy.new()
 	local manager = setmetatable({
 		stack = {},
-		action = nil,
+		queue = {},
 	}, Manager)
 	return manager
 end
