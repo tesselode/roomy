@@ -4,6 +4,13 @@
 
 ## Installation
 
+To use Roomy, place roomy.lua in your project, and then `require` it in each file where you need to use it:
+
+```lua
+local roomy = require 'roomy' -- if your roomy.lua is in the root directory
+local roomy = require 'path.to.roomy' -- if it's in subfolders
+```
+
 ## Usage
 
 ### Defining screens
@@ -74,3 +81,73 @@ function game:keypressed(key)
 	end
 end
 ```
+
+### Applying screen changes
+
+```lua
+manager:apply()
+```
+
+Calling `switch`, `push`, and `pop` does not apply screen changes immediately. Rather, they are queued up and applied all at once when `apply` is called. Placing `manager.apply` at a specific point in the game loop (right before updating, for instance) alleviates some potential issues with inputs meant for one screen being sent to another screen.
+
+Note that if you use `manager.hook`, you don't need to call this manually.
+
+### Emitting events
+
+```lua
+manager:emit(event, ...)
+```
+
+Calls `screen:[event]` on the active screen if that function exists.
+
+### Hooking into LÖVE callbacks
+
+```lua
+manager:hook(options)
+```
+
+Adds code to the LÖVE callbacks to emit events for each callback (previously defined behavior will be preserved). `options` is an optional table with the following keys:
+- `applyBefore` - the name of the callback to run `manager:apply()` at the start of. Set this to `false` to disable this behavior. Defaults to `update`.
+- `callbacks` - a list of callbacks to hook into. Defaults to all LÖVE callbacks (except for `errhand`).
+- `skip` - a list of callbacks not to hook into. If defined, all LÖVE callbacks will be hooked except for the ones in this list. Note that you will get an error if you define both `callbacks` and `skip`.
+
+As an example, the following code will cause the screen manager to hook into every callback except for `keypressed` and `mousepressed`, and screen changes will be applied at the beginning of `love.draw`.
+
+```lua
+manager:hook {
+	skip = {'keypressed', 'mousepressed'},
+	applyBefore = 'draw',
+}
+```
+
+### Screen callbacks
+
+Screens have a few special callbacks that are called when a screen is switched, pushed, or popped.
+
+```lua
+function screen:enter(previous, ...) end
+```
+Called when a manager switches *to* this screen or if this screen is pushed on top of another screen.
+- `previous` - the previously active screen, or `false` if there was no previously active screen
+- `...` - additional arguments passed to `manager.switch` or `manager.push`
+
+```lua
+function screen:leave(next, ...) end
+```
+Called when a manager switches *away from* this screen or if this screen is popped from the stack.
+- `next` - the screen that will be active next
+- `...` - additional arguments passed to `manager.switch` or `manager.pop`
+
+```lua
+function screen:pause(next, ...) end
+```
+Called when a screen is pushed on top of this screen.
+- `next` - the screen that was pushed on top of this screen
+- `...` - additional arguments passed to `manager.push`
+
+```lua
+function screen:resume(previous, ...) end
+```
+Called when a screen is popped and this screen becomes active again.
+- `previous` - the screen that was popped
+- `...` - additional arguments passed to `manager.pop`
