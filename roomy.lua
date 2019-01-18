@@ -76,6 +76,7 @@ function Manager:pop(...)
 			error('Cannot pop a screen when there is no screen below it on the stack', 3)
 		end
 		local previous = self.stack[#self.stack]
+		self:emit('leave', self.stack[#self.stack - 1], unpack(args))
 		self.stack[#self.stack] = nil
 		self:emit('resume', previous, unpack(args))
 	end)

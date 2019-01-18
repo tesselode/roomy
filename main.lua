@@ -28,6 +28,10 @@ function pause:keypressed(key)
 	manager:pop()
 end
 
+function pause:leave()
+	print 'im getting popped now'
+end
+
 function pause:draw()
 	love.graphics.print 'paused'
 end
