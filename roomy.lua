@@ -75,10 +75,8 @@ function Manager:switch(screen, ...)
 	local args = {...}
 	table.insert(self.queue, function()
 		local previous = self.stack[#self.stack]
-		if previous then self:emit('leave', screen, unpack(args)) end
-		-- if there is no screen on the stack yet, make sure the index is still 1
-		local currentStackPosition = math.max(#self.stack, 1)
-		self.stack[currentStackPosition] = screen
+		self:emit('leave', screen, unpack(args))
+		self.stack[#self.stack] = screen
 		self:emit('enter', previous or false, unpack(args))
 	end)
 end
@@ -87,7 +85,7 @@ function Manager:push(screen, ...)
 	local args = {...}
 	table.insert(self.queue, function()
 		local previous = self.stack[#self.stack]
-		if previous then self:emit('pause', screen, unpack(args)) end
+		self:emit('pause', screen, unpack(args))
 		self.stack[#self.stack + 1] = screen
 		self:emit('enter', previous or false, unpack(args))
 	end)
@@ -96,9 +94,6 @@ end
 function Manager:pop(...)
 	local args = {...}
 	table.insert(self.queue, function()
-		if #self.stack == 0 then
-			error('No screen to pop', 3)
-		end
 		if #self.stack == 1 then
 			error('Cannot pop a screen when there is no screen below it on the stack', 3)
 		end
@@ -118,8 +113,9 @@ end
 
 function Manager:emit(event, ...)
 	local screen = self.stack[#self.stack]
-	if not screen then return end
-	if screen[event] then screen[event](screen, ...) end
+	if screen and screen[event] then
+		screen[event](screen, ...)
+	end
 end
 
 function Manager:hook(options)
@@ -152,7 +148,7 @@ end
 
 function roomy.new()
 	local manager = setmetatable({
-		stack = {},
+		stack = {{}},
 		queue = {},
 	}, Manager)
 	return manager
