@@ -34,6 +34,14 @@ local loveCallbacks = {
 	'draw',
 	'filedropped',
 	'focus',
+	'gamepadaxis',
+	'gamepadpressed',
+	'gamepadreleased',
+	'joystickaxis',
+	'joystickhat',
+	'joystickpressed',
+	'joystickreleased',
+	'joystickremoved',
 	'keypressed',
 	'keyreleased',
 	'load',
@@ -54,6 +62,7 @@ local loveCallbacks = {
 	'update',
 	'visible',
 	'wheelmoved',
+	'joystickadded',
 }
 
 -- returns a list of all the items in t1 that aren't in t2
