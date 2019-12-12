@@ -1,6 +1,6 @@
 # Roomy
 
-**Roomy** is a screen management library for LÖVE. It facilitates organizing game code by the different "screens" in the game, such as the title screen, gameplay screen, and pause screen.
+**Roomy** is a screen management library for LÖVE. It helps organize game code by the different "screens" in the game, such as the title screen, gameplay screen, and pause screen.
 
 ## Installation
 
@@ -15,7 +15,7 @@ local roomy = require 'path.to.roomy' -- if it's in subfolders
 
 ### Defining screens
 
-A screen is defined as a table with self functions for each event it should respond to. For example, a gameplay screen may look like this:
+A screen is defined as a table with functions for each event it should respond to. For example, a gameplay screen may look like this:
 
 ```lua
 local gameplay = {}
@@ -82,23 +82,13 @@ function game:keypressed(key)
 end
 ```
 
-### Applying screen changes
-
-```lua
-manager:apply()
-```
-
-Calling `switch`, `push`, and `pop` does not apply screen changes immediately. Rather, they are queued up and applied all at once when `apply` is called. Placing `manager.apply` at a specific point in the game loop (right before updating, for instance) alleviates some potential issues with inputs meant for one screen being sent to another screen.
-
-Note that if you use `manager.hook`, you don't need to call this manually.
-
 ### Emitting events
 
 ```lua
 manager:emit(event, ...)
 ```
 
-Calls `screen:[event]` on the active screen if that function exists.
+Calls `screen:[event]` on the active screen if that function exists. Additional arguments are passed to `screen.event`.
 
 ### Hooking into LÖVE callbacks
 
@@ -107,17 +97,24 @@ manager:hook(options)
 ```
 
 Adds code to the LÖVE callbacks to emit events for each callback (previously defined behavior will be preserved). `options` is an optional table with the following keys:
-- `applyBefore` - the name of the callback to run `manager:apply()` at the start of. Set this to `false` to disable this behavior. Defaults to `update`.
-- `callbacks` - a list of callbacks to hook into. Defaults to all LÖVE callbacks (except for `errhand`).
-- `skip` - a list of callbacks not to hook into. If defined, all LÖVE callbacks will be hooked except for the ones in this list. Note that you will get an error if you define both `callbacks` and `skip`.
+- `include` - a list of callbacks to hook into. If this is defined, *only* these callbacks will be overridden.
+- `exclude` - a list of callbacks *not* to hook into. If this is defined, all of the callbacks except for these ones will be overridden.
 
-As an example, the following code will cause the screen manager to hook into every callback except for `keypressed` and `mousepressed`, and screen changes will be applied at the beginning of `love.draw`.
+As an example, the following code will cause the screen manager to hook into every callback except for `keypressed` and `mousepressed`.
 
 ```lua
 manager:hook {
-	skip = {'keypressed', 'mousepressed'},
-	applyBefore = 'draw',
+	exclude = {'keypressed', 'mousepressed'},
 }
+```
+
+**Note:** because this function overrides the LOVE callbacks, you'll want to call this *after* you've defined them. I recommend using this function in the body of `love.load`, like this:
+
+```lua
+function love.load()
+	manager:hook()
+	manager:switch(gameplay)
+end
 ```
 
 ### Screen callbacks
@@ -127,6 +124,7 @@ Screens have a few special callbacks that are called when a screen is switched, 
 ```lua
 function screen:enter(previous, ...) end
 ```
+
 Called when a manager switches *to* this screen or if this screen is pushed on top of another screen.
 - `previous` - the previously active screen, or `false` if there was no previously active screen
 - `...` - additional arguments passed to `manager.switch` or `manager.push`
@@ -134,6 +132,7 @@ Called when a manager switches *to* this screen or if this screen is pushed on t
 ```lua
 function screen:leave(next, ...) end
 ```
+
 Called when a manager switches *away from* this screen or if this screen is popped from the stack.
 - `next` - the screen that will be active next
 - `...` - additional arguments passed to `manager.switch` or `manager.pop`
@@ -141,6 +140,7 @@ Called when a manager switches *away from* this screen or if this screen is popp
 ```lua
 function screen:pause(next, ...) end
 ```
+
 Called when a screen is pushed on top of this screen.
 - `next` - the screen that was pushed on top of this screen
 - `...` - additional arguments passed to `manager.push`
@@ -148,18 +148,7 @@ Called when a screen is pushed on top of this screen.
 ```lua
 function screen:resume(previous, ...) end
 ```
+
 Called when a screen is popped and this screen becomes active again.
 - `previous` - the screen that was popped
 - `...` - additional arguments passed to `manager.pop`
-
-## License
-
-MIT License
-
-Copyright (c) 2019 Andrew Minnich
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
