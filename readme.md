@@ -50,7 +50,7 @@ Creates a new screen manager. You can create as many screen managers as you want
 ### Switching screens
 
 ```lua
-manager:switch(screen, ...)
+manager:enter(screen, ...)
 ```
 
 Changes the currently active screen.
@@ -113,7 +113,7 @@ manager:hook {
 ```lua
 function love.load()
 	manager:hook()
-	manager:switch(gameplay)
+	manager:enter(gameplay)
 end
 ```
 
