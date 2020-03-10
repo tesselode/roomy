@@ -1,6 +1,6 @@
 local roomy = {
 	_VERSION = 'Roomy',
-	_DESCRIPTION = 'Screen management for LÖVE.',
+	_DESCRIPTION = 'Scene management for LÖVE.',
 	_URL = 'https://github.com/tesselode/roomy',
 	_LICENSE = [[
 		MIT License
@@ -79,29 +79,29 @@ local Manager = {}
 Manager.__index = Manager
 
 function Manager:emit(event, ...)
-	local state = self._stack[#self._stack]
-	if state[event] then state[event](state, ...) end
+	local scene = self._scenes[#self._scenes]
+	if scene[event] then scene[event](scene, ...) end
 end
 
 function Manager:enter(next, ...)
-	local previous = self._stack[#self._stack]
+	local previous = self._scenes[#self._scenes]
 	self:emit('leave', next, ...)
-	self._stack[#self._stack] = next
+	self._scenes[#self._scenes] = next
 	self:emit('enter', previous, ...)
 end
 
 function Manager:push(next, ...)
-	local previous = self._stack[#self._stack]
+	local previous = self._scenes[#self._scenes]
 	self:emit('pause', next, ...)
-	self._stack[#self._stack + 1] = next
+	self._scenes[#self._scenes + 1] = next
 	self:emit('enter', previous, ...)
 end
 
 function Manager:pop(...)
-	local previous = self._stack[#self._stack]
-	local next = self._stack[#self._stack - 1]
+	local previous = self._scenes[#self._scenes]
+	local next = self._scenes[#self._scenes - 1]
 	self:emit('leave', next, ...)
-	self._stack[#self._stack] = nil
+	self._scenes[#self._scenes] = nil
 	self:emit('resume', previous, ...)
 end
 
@@ -122,7 +122,7 @@ end
 
 function roomy.new()
 	return setmetatable({
-		_stack = {{}},
+		_scenes = {{}},
 	}, Manager)
 end
 

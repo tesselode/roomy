@@ -1,6 +1,6 @@
 # Roomy
 
-**Roomy** is a screen management library for LÖVE. It helps organize game code by the different "screens" in the game, such as the title screen, gameplay screen, and pause screen.
+**Roomy** is a scene management library for LÖVE. It helps organize game code by the different "screens" in the game, such as the title screen, gameplay screen, and pause screen.
 
 ## Installation
 
@@ -13,9 +13,9 @@ local roomy = require 'path.to.roomy' -- if it's in subfolders
 
 ## Usage
 
-### Defining screens
+### Defining scenes
 
-A screen is defined as a table with functions for each event it should respond to. For example, a gameplay screen may look like this:
+A scene is defined as a table with functions for each event it should respond to. For example, a gameplay scene may look like this:
 
 ```lua
 local gameplay = {}
@@ -37,32 +37,32 @@ function gameplay:draw()
 end
 ```
 
-A screen table can contain anything, but it will likely have some combination of functions corresponding to LÖVE callbacks and Roomy events.
+A scene table can contain anything, but it will likely have some combination of functions corresponding to LÖVE callbacks and Roomy events.
 
-### Creating a screen manager
+### Creating a scene manager
 
 ```lua
 local manager = roomy.new()
 ```
 
-Creates a new screen manager. You can create as many screen managers as you want, but you'll most likely want one global manager for the main screens of your game.
+Creates a new scene manager. You can create as many scene managers as you want, but you'll most likely want one global manager for the main scenes of your game.
 
-### Switching screens
+### Switching scenes
 
 ```lua
-manager:enter(screen, ...)
+manager:enter(scene, ...)
 ```
 
-Changes the currently active screen.
+Changes the currently active scene.
 
-### Pushing/popping screens
+### Pushing/popping scenes
 
 ```lua
-manager:push(screen, ...)
+manager:push(scene, ...)
 manager:pop()
 ```
 
-Managers use a stack to hold screens. You can push a screen onto the top of the stack, making it the currently active screen, and then pop it, resuming the previous state where it left off. This is useful for implementing pause screens, for example:
+Managers use a stack to hold scenes. You can push a scene onto the top of the stack, making it the currently active scene, and then pop it, resuming the previous state where it left off. This is useful for implementing pause screens, for example:
 
 ```lua
 local pause = {}
@@ -88,7 +88,7 @@ end
 manager:emit(event, ...)
 ```
 
-Calls `screen:[event]` on the active screen if that function exists. Additional arguments are passed to `screen.event`.
+Calls `scene:[event]` on the active scene if that function exists. Additional arguments are passed to `scene.event`.
 
 ### Hooking into LÖVE callbacks
 
@@ -100,7 +100,7 @@ Adds code to the LÖVE callbacks to emit events for each callback (previously de
 - `include` - a list of callbacks to hook into. If this is defined, *only* these callbacks will be overridden.
 - `exclude` - a list of callbacks *not* to hook into. If this is defined, all of the callbacks except for these ones will be overridden.
 
-As an example, the following code will cause the screen manager to hook into every callback except for `keypressed` and `mousepressed`.
+As an example, the following code will cause the scene manager to hook into every callback except for `keypressed` and `mousepressed`.
 
 ```lua
 manager:hook {
@@ -117,38 +117,38 @@ function love.load()
 end
 ```
 
-### Screen callbacks
+### Scene callbacks
 
-Screens have a few special callbacks that are called when a screen is switched, pushed, or popped.
+Scenes have a few special callbacks that are called when a scene is switched, pushed, or popped.
 
 ```lua
-function screen:enter(previous, ...) end
+function scene:enter(previous, ...) end
 ```
 
-Called when a manager switches *to* this screen or if this screen is pushed on top of another screen.
-- `previous` - the previously active screen, or `false` if there was no previously active screen
+Called when a manager switches *to* this scene or if this scene is pushed on top of another scene.
+- `previous` - the previously active scene, or `false` if there was no previously active scene
 - `...` - additional arguments passed to `manager.switch` or `manager.push`
 
 ```lua
-function screen:leave(next, ...) end
+function scene:leave(next, ...) end
 ```
 
-Called when a manager switches *away from* this screen or if this screen is popped from the stack.
-- `next` - the screen that will be active next
+Called when a manager switches *away from* this scene or if this scene is popped from the stack.
+- `next` - the scene that will be active next
 - `...` - additional arguments passed to `manager.switch` or `manager.pop`
 
 ```lua
-function screen:pause(next, ...) end
+function scene:pause(next, ...) end
 ```
 
-Called when a screen is pushed on top of this screen.
-- `next` - the screen that was pushed on top of this screen
+Called when a scene is pushed on top of this scene.
+- `next` - the scene that was pushed on top of this scene
 - `...` - additional arguments passed to `manager.push`
 
 ```lua
-function screen:resume(previous, ...) end
+function scene:resume(previous, ...) end
 ```
 
-Called when a screen is popped and this screen becomes active again.
-- `previous` - the screen that was popped
+Called when a scene is popped and this scene becomes active again.
+- `previous` - the scene that was popped
 - `...` - additional arguments passed to `manager.pop`
