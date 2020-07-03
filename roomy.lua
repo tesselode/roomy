@@ -126,4 +126,6 @@ function roomy.new()
 	}, Manager)
 end
 
+roomy.newManager = roomy.new
+
 return roomy
