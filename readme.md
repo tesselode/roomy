@@ -127,7 +127,7 @@ function scene:enter(previous, ...) end
 
 Called when a manager switches *to* this scene or if this scene is pushed on top of another scene.
 - `previous` - the previously active scene, or `false` if there was no previously active scene
-- `...` - additional arguments passed to `manager.switch` or `manager.push`
+- `...` - additional arguments passed to `manager.enter` or `manager.push`
 
 ```lua
 function scene:leave(next, ...) end
@@ -135,7 +135,7 @@ function scene:leave(next, ...) end
 
 Called when a manager switches *away from* this scene or if this scene is popped from the stack.
 - `next` - the scene that will be active next
-- `...` - additional arguments passed to `manager.switch` or `manager.pop`
+- `...` - additional arguments passed to `manager.enter` or `manager.pop`
 
 ```lua
 function scene:pause(next, ...) end
